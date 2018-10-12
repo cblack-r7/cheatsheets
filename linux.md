@@ -265,17 +265,63 @@ Encryption
 
 busybox
 -------
+Commonly found on embedded systems busybox can be compiled with the needed binaries functions and then symlinks (`ln -s`) are created that point to busybox. Busybox then enumerates the functions that are to be called based on the name of the symlink:
+* `/bin/busybox ls` - Invoke `ls`
+* `ln -s /bin/busybox ./ls` - Creates a symlink to busybox for ls and can be invoked with `./ls`
+* `busybox --list` - List supported busybox functions (symlinks may not exist, but this will list supported functions)
 
 Compilation
 -----------
+List of common compilers:
+* `cc` - Often just a link to `/etc/alternatives/cc` which defines the default compiler
 * `gcc`
 * `clang`
 
-User Management
----------------
+User / Password Management
+--------------------------
+Just like with a lot of things user management. The main consistent files that exist on most systems are:
 
-Init Systems
-------------
+| File | Usage | Def. Perms | Format |
+| ---- | ----- | ---------- | ------ |
+| `/etc/passwd` | User account information | World readable | `login_name`:`password (optional)`:`UID`:`GID`:`comment`:`home_dir`:`shell/interpreter (optional)`|
+| `/etc/group` | Group definitions | World readable | `group_name`:`password (optional)`:`GID`:`user_list` |
+| `/etc/shadow` | Passwords and aging info | Root user/group readable | `login_name`:`hashed_password`:`last_passwd_change`:`min_passwd_age`:`max_passwd_age`:`passwd_warn_period`:`passwd_inactivity_period`:`expiration_date`:`reserved` |
+| `/etc/shadow-` | Passwords and aging info (backup)| Root user/group readable | `login_name`:`hashed_password`:`last_passwd_change`:`min_passwd_age`:`max_passwd_age`:`passwd_warn_period`:`passwd_inactivity_period`:`expiration_date`:`reserved` |
+| `/etc/login.defs` | Shadow configuration | World readable | Site specific configuration that contains password policies |
+| `/etc/gshadow` | Group password info | Root user/group readable| `group_name`:`hashed_password`:`admins`:`members` |
+
+If `/etc/passwd` or `/etc/group` files contain a `password` field they can be cracked. See hashing section.
+
+Common commands for user management (these are not standardized and your mileage may vary):
+* `passwd` - Change user password
+* `chsh` - Change shell
+* `usermod` - Modify user accounts
+* `groupmod` - Modify group settings
+* `useradd` - Add users
+* `adduser` - Add user
+* `userdel` - Delete users
+* `groupadd` - Add groups
+* `addgroup` - Add group
+* `groupdel` - Delete groups
+
+Additionally many configurations and remote access are managed by `pam.d(5)` which manages privilege granting and authorization. For example this is often where you can find configuration for 2FA:
+| File | Function |  Notes |
+| ---- | -------- |  ----- |
+| `/etc/pam.conf` | Rules for services to handle privileges | Overriden by rules in `/etc/pam.d/*` |
+| `/etc/pam.d/*` | Every file in here represents a configuration for the named service (ie sshd) | |
+| `/lib/$ARCH-linux-gnu/security/*.so` | Common location for shared objects representing pam policies | Distro dependent, other locations are likely to exist |
+
+Init Systems and Services
+-------------------------
+
+Identifying init system:
+* `/proc/1/cmdline` - Generally all init systems are PID 1
+
+Interacting with init systems / services
+
+| Function | sysvinit | systemd | OpenRC | upstart | runit | 
+| -------- | -------- | ------- | ------ | ------- | ----- |
+| Interaction | Single config file | Config files (ini) | Shell scripts | Config files + shell scripts | Shell scripts |
 
 Kernel Modules
 --------------
@@ -286,9 +332,11 @@ Kernel Modules
 
 Common Rootkit Techniques
 -------------------------
-* LD_PRELOAD - `/etc/ld.so.preload`/`/etc/ld.so.conf`/`/etc/ld.so.conf.d/*` - hooks all dynamically linked functions
+* LD\_PRELOAD - `/etc/ld.so.preload`/`/etc/ld.so.conf`/`/etc/ld.so.conf.d/*` - hooks all dynamically linked functions
 * Kernel modules - See "Kernel Modules"
-* Init Systems -
+* Init Systems - See "Init Systems"
+* SUID/GUID binaries - Often used for privesc in combination with other techniques they can be hidden
+* `/proc/sys/fs/binfmt_misc/*` - Default interpreters can be added here for support. It's common to apply rootkit interpreters here. 
 
 Kernel Exploits
 ---------------
