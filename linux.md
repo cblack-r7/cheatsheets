@@ -305,6 +305,7 @@ Common commands for user management (these are not standardized and your mileage
 * `groupdel` - Delete groups
 
 Additionally many configurations and remote access are managed by `pam.d(5)` which manages privilege granting and authorization. For example this is often where you can find configuration for 2FA:
+
 | File | Function |  Notes |
 | ---- | -------- |  ----- |
 | `/etc/pam.conf` | Rules for services to handle privileges | Overriden by rules in `/etc/pam.d/*` |
